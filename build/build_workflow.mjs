@@ -358,6 +358,7 @@ if (pc.escalate_reason) notes.push('agent_escalated=' + pc.escalate_reason);
 if (lookup.reason) notes.push('lookup=' + lookup.reason);
 if (fin.classification.intent === 'other' && fin.classification.other_category === 'partnership') notes.push('partnership enquiry; FAQ section 9 contact partnerships@kesarandco.example');
 if (td && td.action) notes.push('ticket=' + td.action);
+if (route.rerouted_as_complaint) notes.push('routed_as=complaint (item problem reported; model intent was ' + route.llm_intent + ')');
 
 // Token and cost ESTIMATE (characters / 4). Labelled as an estimate everywhere it is reported.
 const classifyIn = (${JSON.stringify(prompt(`classify_${PV}.md`).length)} + email.email_block.length) / 4;

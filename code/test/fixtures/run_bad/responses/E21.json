@@ -1,0 +1,1 @@
+{"email_id": "E21", "intent": "complaint", "action_taken": "draft_reply+ticket_updated", "needs_human": "TRUE", "order_found": "TRUE", "ticket_id": "TKT-002", "reply_draft": "Hi,  Warm regards, Team Kesar", "language": "en", "json_valid_first_try": "TRUE", "tokens_est": 4000, "cost_usd_est": 0.0005, "llm_order_id": "KC-1052"}

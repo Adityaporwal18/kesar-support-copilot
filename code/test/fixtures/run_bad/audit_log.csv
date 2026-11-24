@@ -1,0 +1,26 @@
+email_id,intent,action_taken,needs_human,order_found,ticket_id,reply_draft,language,json_valid_first_try,tokens_est,cost_usd_est
+E01,order_status,draft_reply,FALSE,TRUE,,"Hi, https://track.example.com/SS7781041 21 Nov Warm regards, Team Kesar",en,TRUE,4000,0.0005
+E02,product_query,draft_reply,FALSE,FALSE,,"Hi, oily skin vegan Warm regards, Team Kesar",en,TRUE,4000,0.0005
+E03,return_refund,draft_reply+ticket_created,FALSE,TRUE,TKT-001,"Hi, pickup Warm regards, Team Kesar",en,TRUE,4000,0.0005
+E04,complaint,draft_reply+ticket_created,TRUE,TRUE,TKT-002,"Hi, photos Warm regards, Team Kesar",en,TRUE,4000,0.0005
+E05,order_status,draft_reply,FALSE,TRUE,,"Hi, https://track.example.com/SS7781043 23 Nov Warm regards, Team Kesar",hinglish,TRUE,4000,0.0005
+E06,other,log_only,FALSE,FALSE,,,en,TRUE,4000,0.0005
+E07,order_status,draft_reply,TRUE,TRUE,,"Hi,  Warm regards, Team Kesar https://track.example.com/SS7781046",en,TRUE,4000,0.0005
+E08,complaint,draft_reply+ticket_created,TRUE,TRUE,TKT-003,"Hi, photos Warm regards, Team Kesar",en,TRUE,4000,0.0005
+E09,product_query,draft_reply,FALSE,FALSE,,"Hi, 6-8 COD Warm regards, Team Kesar",hi,TRUE,4000,0.0005
+E10,order_status,draft_reply,FALSE,TRUE,,"Hi, https://track.example.com/BX5521044 25 Nov Warm regards, Team Kesar",en,TRUE,4000,0.0005
+E11,return_refund,draft_reply+ticket_created,FALSE,TRUE,TKT-004,"Hi, pickup Warm regards, Team Kesar",en,TRUE,4000,0.0005
+E12,return_refund,draft_reply+ticket_created,TRUE,TRUE,TKT-005,"Hi,  Warm regards, Team Kesar",en,TRUE,4000,0.0005
+E13,other,log_only,TRUE,FALSE,,,en,TRUE,4000,0.0005
+E14,complaint,draft_reply+ticket_created,TRUE,TRUE,TKT-006,"Hi, photos Warm regards, Team Kesar",en,TRUE,4000,0.0005
+E15,order_status,draft_reply,FALSE,TRUE,,"Hi, https://track.example.com/BX5521042 Warm regards, Team Kesar",en,TRUE,4000,0.0005
+E16,return_refund,draft_reply+ticket_created,TRUE,TRUE,TKT-007,"Hi,  Warm regards, Team Kesar",en,TRUE,4000,0.0005
+E17,other,log_only,FALSE,FALSE,,,en,TRUE,4000,0.0005
+E18,order_status,draft_reply,TRUE,FALSE,,"Hi, order ID Warm regards, Team Kesar",en,TRUE,4000,0.0005
+E19,return_refund,draft_reply+ticket_created,FALSE,TRUE,TKT-008,"Hi, UPI Warm regards, Team Kesar",en,TRUE,4000,0.0005
+E20,product_query,draft_reply,TRUE,FALSE,,"Hi, dermatologist Warm regards, Team Kesar",en,TRUE,4000,0.0005
+E21,complaint,draft_reply+ticket_updated,TRUE,TRUE,TKT-002,"Hi,  Warm regards, Team Kesar",en,TRUE,4000,0.0005
+E22,order_status,draft_reply,TRUE,FALSE,,"Hi,  Warm regards, Team Kesar",en,TRUE,4000,0.0005
+E23,complaint,draft_reply+ticket_created,TRUE,TRUE,TKT-010,"Hi,  Warm regards, Team Kesar",en,TRUE,4000,0.0005
+E24,order_status,draft_reply,TRUE,TRUE,,"Hi, cancelled INR 828 Warm regards, Team Kesar",en,TRUE,4000,0.0005
+E25,other,log_only,FALSE,FALSE,,,en,TRUE,4000,0.0005

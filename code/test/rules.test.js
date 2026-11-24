@@ -274,3 +274,32 @@ test('buildAuditRow: keys equal the sheet header', () => {
   assert.strictEqual(row.order_found, 'FALSE');
   assert.strictEqual(row.audit_key, 'E22|v2');
 });
+
+test('v2 backstops: medical words, embedded instructions, item problems filed as refunds', () => {
+  const run = (id, patch) => {
+    const email = E(id);
+    const classification = Object.assign(classificationFor(id), patch);
+    const lookup = lookupFor(id, classification.order_id);
+    const facts = computeFacts({ email, classification, lookup, config });
+    return decideRoute({ email, classification, lookup, facts, config });
+  };
+  // E20: the model did not set the medical flag in v1; the email text alone must flag it.
+  const e20 = run('E20', { risk_flags: [] });
+  assert.ok(e20.needs_human && e20.needs_human_reasons.includes('medical'));
+  // E12: instruction-like text is flagged without the model's help, and priority stays Medium.
+  const e12 = run('E12', { risk_flags: [] });
+  assert.ok(e12.needs_human_reasons.includes('embedded_instructions'));
+  assert.strictEqual(e12.priority, 'Medium');
+  assert.strictEqual(e12.ticket_needed, true);
+  // E08 and E21: filed as return_refund by the model in v1, but a leaking/damaged item is a complaint.
+  const e08 = run('E08', { intent: 'return_refund', secondary_intent: 'complaint' });
+  assert.strictEqual(e08.route, 'complaint');
+  assert.strictEqual(e08.priority, 'High');
+  assert.ok(e08.needs_human_reasons.includes('complaint_needs_verification'));
+  assert.ok(!e08.needs_human_reasons.includes('refund_declined'));
+  assert.strictEqual(run('E21', { intent: 'return_refund' }).route, 'complaint');
+  // Ordinary emails are not caught by the detectors.
+  for (const id of ['E01', 'E02', 'E03', 'E05', 'E09', 'E10', 'E11', 'E15', 'E19', 'E25']) {
+    assert.strictEqual(run(id, {}).needs_human, false, id);
+  }
+});

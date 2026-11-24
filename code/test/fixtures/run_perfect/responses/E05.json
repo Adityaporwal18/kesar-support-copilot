@@ -1,0 +1,1 @@
+{"email_id": "E05", "intent": "order_status", "action_taken": "draft_reply", "needs_human": "FALSE", "order_found": "TRUE", "ticket_id": "", "reply_draft": "Hi, https://track.example.com/SS7781043 23 Nov Warm regards, Team Kesar", "language": "hinglish", "json_valid_first_try": "TRUE", "tokens_est": 4000, "cost_usd_est": 0.0005, "llm_order_id": "KC-1043"}

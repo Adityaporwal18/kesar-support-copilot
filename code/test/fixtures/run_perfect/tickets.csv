@@ -1,0 +1,10 @@
+ticket_id,order_id,email_ids,priority,status
+TKT-001,KC-1047,E03,Medium,Open
+TKT-002,KC-1052,"E04, E21",High,Open
+TKT-003,KC-1051,E08,High,Open
+TKT-004,KC-1048,E11,Medium,Open
+TKT-005,KC-1055,E12,Medium,Open
+TKT-006,KC-1053,E14,High,Open
+TKT-007,KC-1049,E16,Medium,Open
+TKT-008,KC-1050,E19,Medium,Open
+TKT-009,KC-1054,E23,High,Open

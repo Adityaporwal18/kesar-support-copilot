@@ -1,0 +1,1 @@
+{"email_id": "E17", "intent": "other", "action_taken": "log_only", "needs_human": "FALSE", "order_found": "FALSE", "ticket_id": "", "reply_draft": "", "language": "en", "json_valid_first_try": "TRUE", "tokens_est": 4000, "cost_usd_est": 0.0005, "llm_order_id": null}

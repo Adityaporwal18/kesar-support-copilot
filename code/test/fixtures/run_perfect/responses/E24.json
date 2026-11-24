@@ -1,0 +1,1 @@
+{"email_id": "E24", "intent": "order_status", "action_taken": "draft_reply", "needs_human": "TRUE", "order_found": "TRUE", "ticket_id": "", "reply_draft": "Hi, cancelled INR 828 Warm regards, Team Kesar", "language": "en", "json_valid_first_try": "TRUE", "tokens_est": 4000, "cost_usd_est": 0.0005, "llm_order_id": "KC-1045"}

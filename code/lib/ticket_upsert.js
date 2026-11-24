@@ -23,7 +23,7 @@ function ticketDecision(input) {
     if (String(r.status || '').trim().toLowerCase() === 'closed') return false;
     if (orderId) return String(r.order_id || '').trim().toUpperCase() === String(orderId).toUpperCase();
     // No order ID: fall back to the same customer and the same kind of issue.
-    return !String(r.order_id || '').trim() && String(r.customer_email || '').trim().toLowerCase() === customerEmail && String(r.intent || '') === String(c.intent || '');
+    return !String(r.order_id || '').trim() && String(r.customer_email || '').trim().toLowerCase() === customerEmail && String(r.intent || '') === String(route.route || c.intent || '');
   });
 
   if (open.length > 0) {
@@ -55,7 +55,7 @@ function ticketDecision(input) {
       order_id: orderId,
       customer_email: customerEmail,
       email_ids: email.email_id || '',
-      intent: c.intent || '',
+      intent: route.route || c.intent || '',
       priority: route.priority || 'Medium',
       status: 'Open',
       summary: c.summary || '',

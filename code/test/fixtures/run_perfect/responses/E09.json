@@ -1,0 +1,1 @@
+{"email_id": "E09", "intent": "product_query", "action_taken": "draft_reply", "needs_human": "FALSE", "order_found": "FALSE", "ticket_id": "", "reply_draft": "Hi, 6-8 COD Warm regards, Team Kesar", "language": "hi", "json_valid_first_try": "TRUE", "tokens_est": 4000, "cost_usd_est": 0.0005, "llm_order_id": null}

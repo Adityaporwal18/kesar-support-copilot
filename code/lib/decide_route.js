@@ -3,6 +3,9 @@
 // ticket, or clear the needs-human flag. Pure: no I/O, no clock.
 
 // --- BEGIN PURE ---
+const DR_MEDICAL = /\b(eczema|psoriasis|dermatitis|rosacea|allerg(y|ic|ies)|rash(es)?|infection|pregnan(t|cy)|skin (disease|condition)|medical|cure[sd]?|itch(y|ing)?|swelling|swollen|burning)\b/i;
+const DR_INSTRUCTIONS = /(ignore (all |any )?(the )?(previous|prior|above) (instructions|rules)|system (note|prompt|message)|\bAI assistant\b|as an ai\b|disregard (the |all )?(polic(y|ies)|rules|instructions))/i;
+
 function decideRoute(input) {
   const c = (input && input.classification) || {};
   const lookup = (input && input.lookup) || {};
@@ -11,11 +14,24 @@ function decideRoute(input) {
   const email = (input && input.email) || {};
   const threshold = typeof cfg.CONFIDENCE_THRESHOLD === 'number' ? cfg.CONFIDENCE_THRESHOLD : 0.75;
 
-  const intent = c.intent || 'other';
+  const llmIntent = c.intent || 'other';
+  const text = String(email.text || '');
+  const flags = (Array.isArray(c.risk_flags) ? c.risk_flags : []).slice();
+
+  // Deterministic backstops (added in v2 after v1 missed these). They do not rely on the model.
+  // 1. Medical or skin-reaction words: FAQ section 8 says a human must handle these.
+  if (DR_MEDICAL.test(text) && flags.indexOf('medical') === -1) flags.push('medical');
+  // 2. Text that addresses an AI or tries to override rules is flagged; it never changes routing.
+  if (DR_INSTRUCTIONS.test(text) && flags.indexOf('embedded_instructions') === -1) flags.push('embedded_instructions');
+  // 3. A damaged, leaking, wrong or missing item is a complaint (High priority, human verifies)
+  //    even when the model filed it under return_refund because the customer asked for money back.
+  const itemProblem = ['damaged', 'leaking', 'wrong_item', 'missing_item'].indexOf(c.issue_type) !== -1;
+  const intent = (llmIntent === 'return_refund' && itemProblem) ? 'complaint' : llmIntent;
+  const reroutedAsComplaint = intent !== llmIntent;
+
   const orderIntents = ['order_status', 'return_refund', 'complaint'];
   const isOrderIntent = orderIntents.indexOf(intent) !== -1;
   const privacyBlock = !!(lookup.found && lookup.authorized === false);
-  const flags = Array.isArray(c.risk_flags) ? c.risk_flags : [];
   const reasons = [];
 
   if (c.fallback_used) reasons.push('classification_fallback');
@@ -72,6 +88,9 @@ function decideRoute(input) {
 
   return {
     route: intent,
+    llm_intent: llmIntent,
+    rerouted_as_complaint: reroutedAsComplaint,
+    risk_flags: flags,
     draft_needed: intent !== 'other',
     ticket_needed: ticketNeeded,
     priority: priority,
