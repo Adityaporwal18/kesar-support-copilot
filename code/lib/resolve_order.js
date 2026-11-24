@@ -3,8 +3,20 @@
 // customer who placed it. Pure: no I/O, no clock.
 
 // --- BEGIN PURE ---
+// "2026-11-21" -> "21 Nov 2026" so replies never show raw ISO dates and the model never reformats a date itself.
+function displayDate(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso == null ? '' : iso));
+  if (!m) return null;
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return Number(m[3]) + ' ' + months[Number(m[2]) - 1] + ' ' + m[1];
+}
+
 function trimOrder(o) {
   return {
+    dates_display: {
+      ordered: displayDate(o.order_date), shipped: displayDate(o.shipped_date), estimated_delivery: displayDate(o.estimated_delivery),
+      delivered: displayDate(o.delivered_date), cancelled: displayDate(o.cancelled_date),
+    },
     order_id: o.order_id,
     customer_first_name: String(o.customer_name || '').split(/\s+/)[0] || '',
     order_date: o.order_date,
@@ -80,4 +92,4 @@ function resolveOrder(input) {
 }
 // --- END PURE ---
 
-if (typeof module !== 'undefined') module.exports = { resolveOrder, trimOrder };
+if (typeof module !== 'undefined') module.exports = { resolveOrder, trimOrder, displayDate };

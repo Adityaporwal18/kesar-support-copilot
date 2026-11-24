@@ -317,3 +317,20 @@ test('v2 language backstop: script decides between hi and hinglish', () => {
   assert.strictEqual(validateClassification(mk('en'), E('E01').text).classification.language, 'en');
   assert.strictEqual(validateClassification(mk('hinglish'), E('E05').text).classification.language, 'hinglish');
 });
+
+test('v2 final: friendly dates, markdown stripping, invented product sizes', () => {
+  const { displayDate } = lib('resolve_order.js');
+  assert.strictEqual(displayDate('2026-11-21'), '21 Nov 2026');
+  assert.strictEqual(displayDate(null), null);
+  assert.strictEqual(lookupFor('E01', 'KC-1041').order.dates_display.estimated_delivery, '21 Nov 2026');
+  const sign = '\n\nWarm regards,\nTeam Kesar';
+  const p9 = pipeline('E09');
+  const md = postcheckReply({ draft: 'नमस्ते,\nडिलीवरी में **6–8 बिजनेस दिन** लगते हैं।' + sign, lookup: p9.lookup, facts: p9.facts, route: p9.route, faqText: faq, first_name: 'Bhaskar' });
+  assert.ok(md.soft.includes('markdown_stripped'));
+  assert.doesNotMatch(md.reply_draft, /\*\*/);
+  const p14 = pipeline('E14');
+  const wrong = postcheckReply({ draft: 'Hi Karan,\nSorry you received Bhringraj Hair Oil 100 ml instead. Please share photos.' + sign, lookup: p14.lookup, facts: p14.facts, route: p14.route, faqText: faq, first_name: 'Karan', tools_called: ['get_order'] });
+  assert.ok(wrong.critical.includes('unbacked_measure'));
+  const right = postcheckReply({ draft: 'Hi Karan,\nSorry you received Bhringraj Hair Oil 200 ml instead of the Ubtan Face Pack 100 g. Please share photos.' + sign, lookup: p14.lookup, facts: p14.facts, route: p14.route, faqText: faq, first_name: 'Karan', tools_called: ['get_order'] });
+  assert.deepStrictEqual(right.critical, []);
+});

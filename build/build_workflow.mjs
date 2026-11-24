@@ -167,9 +167,11 @@ function buildMain() {
   b.add('Webhook: New Email', 'n8n-nodes-base.webhook', 2, { httpMethod: 'POST', path: WEBHOOK_PATH, responseMode: 'responseNode', options: {} }, { webhookId: uid('webhook-' + ENV) });
 
   // Every tunable setting lives here so it can be changed in one place.
+  const P = ctx.prices || {};
   const cfg = { ENV, PROMPT_VERSION: PV, SHEET_ID, RETURN_WINDOW_DAYS: 7, DAMAGE_WINDOW_DAYS: 2, CONFIDENCE_THRESHOLD: 0.75,
     ORDERS_URL: RAW + 'orders.json', FAQ_URL: RAW + 'faq.md', CLASSIFY_MODEL: M.classify.model, AGENT_MODEL: M.agent.model,
-    PRICE_IN_USD_PER_M: ctx.prices ? ctx.prices.in : 0, PRICE_OUT_USD_PER_M: ctx.prices ? ctx.prices.out : 0 };
+    PRICE_CLASSIFY_IN_USD_PER_M: P.classify_in || 0, PRICE_CLASSIFY_OUT_USD_PER_M: P.classify_out || 0,
+    PRICE_AGENT_IN_USD_PER_M: P.agent_in || 0, PRICE_AGENT_OUT_USD_PER_M: P.agent_out || 0 };
   b.add('Config', 'n8n-nodes-base.set', 3.4, { mode: 'manual', includeOtherFields: false, options: {},
     assignments: { assignments: Object.entries(cfg).map(([name, value]) => ({ id: uid('cfg-' + name), name, value, type: typeof value === 'number' ? 'number' : 'string' })) } });
 
@@ -371,7 +373,7 @@ if (route.draft_needed && !pc.agent_error) {
   agentOut = (pc.agent_chars || 0) / 4 + 40 * (pc.tool_calls || 0);
 }
 const tokensIn = Math.round(classifyIn + agentIn), tokensOut = Math.round(classifyOut + agentOut);
-const cost = (tokensIn * cfg.PRICE_IN_USD_PER_M + tokensOut * cfg.PRICE_OUT_USD_PER_M) / 1e6;
+const cost = (classifyIn * cfg.PRICE_CLASSIFY_IN_USD_PER_M + classifyOut * cfg.PRICE_CLASSIFY_OUT_USD_PER_M + agentIn * cfg.PRICE_AGENT_IN_USD_PER_M + agentOut * cfg.PRICE_AGENT_OUT_USD_PER_M) / 1e6;
 
 const row = buildAuditRow({ email, classification: fin.classification, lookup, route, prompt_version: cfg.PROMPT_VERSION, action_taken: action,
   needs_human: reasons.length > 0, needs_human_reasons: reasons, ticket_id: td ? td.ticket_id : '', reply_draft: pc.reply_draft || '',

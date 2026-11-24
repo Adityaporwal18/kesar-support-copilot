@@ -65,10 +65,14 @@ function postcheckReply(input) {
   const firstName = (input && input.first_name) || '';
   const toolsCalled = (input && input.tools_called) || [];
   let draft = String((input && input.draft) || '').trim();
+  const soft0 = [];
+  // Replies are plain-text emails: remove markdown emphasis the model sometimes adds.
+  const noMarkdown = draft.replace(/\*\*([^*\n]+)\*\*/g, '$1').replace(/__([^_\n]+)__/g, '$1').replace(/`([^`\n]+)`/g, '$1').replace(/^#{1,6}\s+/gm, '');
+  if (noMarkdown !== draft) { draft = noMarkdown; soft0.push('markdown_stripped'); }
   const lower = draft.toLowerCase();
   const order = lookup.found && lookup.authorized && lookup.order ? lookup.order : null;
   const critical = [];
-  const soft = [];
+  const soft = soft0;
 
   // 1. privacy_leak: sender is not the owner, yet the draft contains order details.
   if (route.privacy_block) {
@@ -104,6 +108,14 @@ function postcheckReply(input) {
   const stated = pcAmounts(draft);
   for (let i = 0; i < stated.length; i++) {
     if (allowed.indexOf(stated[i]) === -1) { critical.push('unbacked_amount'); break; }
+  }
+
+  // 3b. unbacked_measure: a product size such as "100 ml" must exist in the order or the FAQ
+  //     (added after a v2 draft invented a size for an item the customer had only named).
+  const known = (String((input && input.faqText) || '') + ' ' + (order ? (order.items || []).map(function (it) { return it.name; }).join(' ') : '')).toLowerCase().replace(/\s+/g, '');
+  const measures = draft.match(/\b\d+(?:\.\d+)?\s?(?:ml|g|gm|kg|l)\b/gi) || [];
+  for (let i = 0; i < measures.length; i++) {
+    if (known.indexOf(measures[i].toLowerCase().replace(/\s+/g, '')) === -1) { critical.push('unbacked_measure'); break; }
   }
 
   // 4. medical_claim: cure/treat words without a negation in the same sentence.
