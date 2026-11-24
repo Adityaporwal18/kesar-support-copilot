@@ -116,6 +116,14 @@ function validateClassification(rawText, emailText) {
     c.secondary_intent = null;
     notes.push('secondary_intent_same_as_intent_nulled');
   }
+  // Language backstop (v2): by the schema, "hi" means Devanagari script. The script is a fact
+  // we can check, so the model's label is corrected when it contradicts the text.
+  const letters = String(emailText || '').replace(/[^A-Za-z\u0900-\u097F]/g, '');
+  const devanagari = letters.replace(/[^\u0900-\u097F]/g, '').length;
+  if (letters.length > 0) {
+    if (c.language === 'hi' && devanagari === 0) { c.language = 'hinglish'; notes.push('language_corrected_no_devanagari'); }
+    else if (c.language !== 'hi' && devanagari / letters.length > 0.5) { c.language = 'hi'; notes.push('language_corrected_devanagari'); }
+  }
   if (c.order_id !== null) {
     const hay = String(emailText || '').toUpperCase();
     if (hay.indexOf(c.order_id.toUpperCase()) === -1) {

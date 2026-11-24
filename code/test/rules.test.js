@@ -303,3 +303,17 @@ test('v2 backstops: medical words, embedded instructions, item problems filed as
     assert.strictEqual(run(id, {}).needs_human, false, id);
   }
 });
+
+test('v2 language backstop: script decides between hi and hinglish', () => {
+  const mk = (language) => JSON.stringify({ intent: 'order_status', secondary_intent: null, order_id: null, sentiment: 'neutral', language, confidence: 0.9, summary: 's' });
+  // E05 is Hindi in Latin script: a model label of "hi" is corrected to "hinglish".
+  const e05 = validateClassification(mk('hi'), E('E05').text);
+  assert.strictEqual(e05.classification.language, 'hinglish');
+  assert.ok(e05.notes.includes('language_corrected_no_devanagari'));
+  // E09 is in Devanagari: a wrong label is corrected to "hi"; a right one is left alone.
+  assert.strictEqual(validateClassification(mk('en'), E('E09').text).classification.language, 'hi');
+  assert.strictEqual(validateClassification(mk('hi'), E('E09').text).classification.language, 'hi');
+  // English stays English, and a correct hinglish label is not touched.
+  assert.strictEqual(validateClassification(mk('en'), E('E01').text).classification.language, 'en');
+  assert.strictEqual(validateClassification(mk('hinglish'), E('E05').text).classification.language, 'hinglish');
+});
