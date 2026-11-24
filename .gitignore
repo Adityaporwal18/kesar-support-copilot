@@ -1,0 +1,16 @@
+# secrets - never commit
+.env
+.env.*
+!.env.example
+*.pem
+*credentials*.json
+*service-account*.json
+# local tooling / private notes
+.omo/
+.codegraph
+private/
+build/out/
+node_modules/
+__pycache__/
+*.pyc
+.DS_Store
