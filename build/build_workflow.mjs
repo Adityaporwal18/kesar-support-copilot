@@ -121,6 +121,40 @@ return [{ json: { ok, env: body.env || null, SHEET_ID: ok ? sheets[body.env] : n
   return b.done();
 }
 
+
+// ---------- admin: one-time sheet setup (creates the two tabs with their header rows) ----------
+function buildSetup() {
+  const b = builder('Kesar admin: setup sheet');
+  const header = (f) => fs.readFileSync(path.join(ROOT, 'setup', f), 'utf8').trim().split(',');
+  b.add('Webhook: Setup', 'n8n-nodes-base.webhook', 2, { httpMethod: 'POST', path: 'kesar-admin-setup', responseMode: 'responseNode', options: {} }, { webhookId: uid('admin-setup') });
+  codeNode(b, 'Config', `
+const body = $('Webhook: Setup').first().json.body || {};
+const sheets = ${JSON.stringify(ctx.sheets)};
+const ok = body.confirm === 'SETUP' && Object.prototype.hasOwnProperty.call(sheets, body.env) && !!sheets[body.env];
+return [{ json: { ok, env: body.env || null, SHEET_ID: ok ? sheets[body.env] : null } }];`);
+  ifNode(b, 'IF: Confirmed', '={{ $json.ok }}');
+  const soft = { onError: 'continueRegularOutput', alwaysOutputData: true };
+  const doc = { documentId: { __rl: true, value: `={{ $('Config').first().json.SHEET_ID }}`, mode: 'id' } };
+  const tab = (label, title, file) => {
+    sheetsNode(b, `Sheets: Create ${label}`, { operation: 'create', ...doc, title, options: {} }, soft);
+    codeNode(b, `${label} Header Row`, `return [{ json: ${JSON.stringify(Object.fromEntries(header(file).map((h) => [h, 'x'])))} }];`);
+    sheetsNode(b, `Sheets: Write ${label} Header`, { operation: 'append', ...sheet(title), columns: { mappingMode: 'autoMapInputData', value: {}, matchingColumns: [], schema: [] },
+      options: { cellFormat: 'RAW', handlingExtraData: 'insertInNewColumn' } }, soft);
+    sheetsNode(b, `Sheets: Clear ${label} Rows`, { operation: 'clear', ...sheet(title), clear: 'wholeSheet', keepFirstRow: true }, soft);
+    return [`Sheets: Create ${label}`, `${label} Header Row`, `Sheets: Write ${label} Header`, `Sheets: Clear ${label} Rows`];
+  };
+  const a = tab('Audit', 'Audit Log', 'audit_log_header.csv');
+  const t = tab('Tickets', 'Tickets', 'tickets_header.csv');
+  sheetsNode(b, 'Sheets: Remove Sheet1', { operation: 'remove', ...sheet('Sheet1') }, soft);
+  b.add('Respond: Done', 'n8n-nodes-base.respondToWebhook', 1.1, { respondWith: 'json', responseBody: `={{ JSON.stringify({ ok: true, env: $('Config').first().json.env }) }}`, options: {} });
+  b.add('Respond: Refused', 'n8n-nodes-base.respondToWebhook', 1.1, { respondWith: 'json', responseBody: `={{ JSON.stringify({ ok: false, error: 'bad request or sheet url missing' }) }}`, options: { responseCode: 400 } }, {}, [960, 520]);
+  b.chain('Webhook: Setup', 'Config', 'IF: Confirmed');
+  b.link('IF: Confirmed', a[0], 0);
+  b.link('IF: Confirmed', 'Respond: Refused', 1);
+  b.chain(...a, ...t, 'Sheets: Remove Sheet1', 'Respond: Done');
+  return b.done();
+}
+
 // ---------- main workflow ----------
 function buildMain() {
   const b = builder('Kesar Support Copilot' + SUFFIX);
@@ -222,7 +256,7 @@ return [{ json: decideRoute({ email: ${E}, classification: $('Finalize Classific
 
   // --- AI agent with two tools ---
   const xAgent = 240 * 17;
-  b.add('AI Agent: Draft Reply', '@n8n/n8n-nodes-langchain.agent', 2, { promptType: 'define', needsFallback: useAgentFallback,
+  b.add('AI Agent: Draft Reply', '@n8n/n8n-nodes-langchain.agent', 3.1, { promptType: 'define', needsFallback: useAgentFallback,
     text: `={{ 'FACTS\\n' + $('Decide Route').first().json.agent_brief + '\\n\\n' + ${E}.email_block }}`,
     options: { systemMessage: prompt(`agent_system_${PV}.md`), maxIterations: 5, returnIntermediateSteps: true } },
     { onError: 'continueRegularOutput', retryOnFail: true, maxTries: 2, waitBetweenTries: 5000 }, [xAgent, 300]);
@@ -385,6 +419,7 @@ if (which === 'all' || which === 'tools') {
   outputs['kesar_tool_get_order.json'] = buildGetOrder();
   outputs['kesar_tool_search_faq.json'] = buildSearchFaq();
   outputs['kesar_admin_reset_sheet.json'] = buildAdmin();
+  outputs['kesar_admin_setup_sheet.json'] = buildSetup();
 }
 if (which === 'all' || which === 'main') outputs[`kesar_support_copilot_${ENV}.json`] = buildMain();
 for (const [file, wf] of Object.entries(outputs)) {

@@ -7,7 +7,7 @@ import argparse
 import re
 import sys
 import urllib.parse
-import urllib.request
+import subprocess
 from pathlib import Path
 
 TABS = {"Audit Log": "audit_log.csv", "Tickets": "tickets.csv"}
@@ -23,9 +23,11 @@ def sheet_id(url):
 def fetch_tab(sid, tab):
     url = (f"https://docs.google.com/spreadsheets/d/{sid}/gviz/tq?tqx=out:csv&headers=1&sheet="
            + urllib.parse.quote(tab))
-    req = urllib.request.Request(url, headers={"User-Agent": "kesar-snapshot/1.0"})
-    with urllib.request.urlopen(req, timeout=60) as resp:
-        text = resp.read().decode("utf-8", errors="replace")
+    # curl uses the system certificate store; this Python build ships without a CA bundle.
+    r = subprocess.run(["curl", "-sL", "--fail", "--max-time", "60", url], capture_output=True)
+    if r.returncode != 0:
+        sys.exit(f"Could not download tab '{tab}' (curl exit {r.returncode}). Is the sheet shared as 'Anyone with the link can view'?")
+    text = r.stdout.decode("utf-8", errors="replace")
     if "<html" in text[:500].lower():
         sys.exit(f"Tab '{tab}' returned a web page, not CSV. Set sharing to 'Anyone with the link can view'.")
     return text

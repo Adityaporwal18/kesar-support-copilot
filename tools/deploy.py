@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "build" / "out"
 CRED_NAMES = {"groqApi": "Groq (Kesar)", "googlePalmApi": "Gemini (Kesar)", "googleApi": "Google SA (Kesar)"}
 TOOL_FILES = {"Kesar tool: get_order": "kesar_tool_get_order.json", "Kesar tool: search_faq": "kesar_tool_search_faq.json",
-              "Kesar admin: reset sheet": "kesar_admin_reset_sheet.json"}
+              "Kesar admin: reset sheet": "kesar_admin_reset_sheet.json", "Kesar admin: setup sheet": "kesar_admin_setup_sheet.json"}
 
 
 def load_env():
