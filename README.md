@@ -3,7 +3,7 @@
 An n8n workflow that reads each support email, classifies it with an LLM, looks up the order, drafts a reply with an AI agent, raises tickets, and logs everything to a Google Sheet. Replies are drafts only; nothing is sent.
 
 - **Google Sheet (view access):** https://docs.google.com/spreadsheets/d/10iLn7j8cLkGZBr4L7KDukebJAVEriDV4Smgv_ksoz1g/edit?usp=sharing — tab `Audit Log` has the 25 emails of the final run, tab `Tickets` has the 9 tickets.
-- **5-minute recording:** VIDEO_URL_HERE
+- **5-minute recording:** https://drive.google.com/file/d/1ukkPJXQgL857BFvTH791_ir6GTRIOZwa/view?usp=sharing
 - **Test results:** [`TEST_REPORT.md`](TEST_REPORT.md)
 
 ## 1. Summary
@@ -47,7 +47,7 @@ One webhook call is one email is one execution, so emails are handled strictly i
 
 Supporting workflows: `Kesar tool: get_order`, `Kesar tool: search_faq`, `Kesar admin: reset sheet` (clears data rows before a run).
 
-Source of truth: rule code in `code/lib/` (17 offline tests in `code/test/`), prompts in `prompts/`. `build/build_workflow.mjs` injects both into the workflow JSON, and `tools/deploy.py` loads it into n8n. The files in `workflow/` are exports from the running instance.
+Source of truth: rule code in `code/lib/` (18 offline tests in `code/test/`), prompts in `prompts/`. `build/build_workflow.mjs` injects both into the workflow JSON, and `tools/deploy.py` loads it into n8n. The files in `workflow/` are exports from the running instance.
 
 ## 3. Setup — how someone else can run this
 
