@@ -47,7 +47,17 @@ function builder(workflowName) {
     connections[from][kind][outIndex].push({ node: to, type: kind, index: inIndex });
   };
   const chain = (...names) => { for (let i = 0; i < names.length - 1; i++) link(names[i], names[i + 1]); };
-  const done = () => ({ name: workflowName, nodes, connections, settings: { executionOrder: 'v1' } });
+  // Layout only: wrap the long left-to-right chain into rows so the whole canvas is readable in one screenshot.
+  const done = () => {
+    const ROW_WIDTH = 240 * 8, ROW_HEIGHT = 640;
+    if (nodes.length > 10) {
+      for (const n of nodes) {
+        const row = Math.floor((n.position[0] - 120) / ROW_WIDTH);
+        n.position = [n.position[0] - row * ROW_WIDTH, n.position[1] + row * ROW_HEIGHT];
+      }
+    }
+    return { name: workflowName, nodes, connections, settings: { executionOrder: 'v1' } };
+  };
   return { add, link, chain, done, at: (v) => { x = v; } };
 }
 const codeNode = (b, name, js, extra, pos) => b.add(name, 'n8n-nodes-base.code', 2, { jsCode: js }, extra, pos);
