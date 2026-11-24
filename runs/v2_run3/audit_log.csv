@@ -1,0 +1,133 @@
+"email_id","received_at","from_email","intent","secondary_intent","order_id","language","sentiment","confidence","order_found","action_taken","needs_human","ticket_id","reply_draft","prompt_version","processed_at","error","notes","audit_key","json_valid_first_try","needs_human_reasons","tokens_est","cost_usd_est"
+"E01","2026-11-20T09:02:00+05:30","ananya.rao@example.com","order_status","","KC-1041","en","neutral","0.95","TRUE","draft_reply","FALSE","","Hi Ananya,
+
+Your order KC-1041 for Saffron Glow Face Serum 30 ml was shipped via SwiftShip on 17 Nov 2026. It is estimated to reach you by 21 Nov 2026, and you can track it here: https://track.example.com/SS7781041. Please let us know if you need any further assistance!
+
+Warm regards,
+Team Kesar","v2","2026-11-24T14:11:17.295Z","","order_match=order_id; order_id_source=llm; repair=none; tools=get_order; faq=none","E01|v2","TRUE","","3976","0.001238"
+"E02","2026-11-20T09:15:00+05:30","ishita.banerjee@example.com","product_query","","","en","neutral","0.95","FALSE","draft_reply","FALSE","","Hello Ishita,
+
+The Saffron Glow Face Serum is lightweight, non-greasy, and suitable for all skin types including oily skin. It is also completely vegan, so it fits your routine nicely.
+
+Warm regards,
+Team Kesar","v2","2026-11-24T14:11:55.778Z","","order_match=none; order_id_source=none; repair=none; tools=search_faq; faq=7; lookup=Lookup not needed for this intent.","E02|v2","TRUE","","3988","0.001189"
+"E03","2026-11-20T09:28:00+05:30","kavya.reddy@example.com","return_refund","","KC-1047","en","neutral","0.95","TRUE","draft_reply+ticket_created","FALSE","TKT-001","Hi Kavya,
+
+Yes, you can return your Rose Water Toner 200 ml since it was delivered on 16 Nov 2026 and is still unopened within the 7 day window. The refundable amount is 899 INR as shipping fees are non-refundable on ordinary returns. We can arrange a free reverse pickup for you upon request.
+
+Warm regards,
+Team Kesar","v2","2026-11-24T14:12:29.765Z","","order_match=order_id; order_id_source=llm; repair=none; tools=get_order,search_faq; faq=4,6; ticket=create","E03|v2","TRUE","","6234","0.002011"
+"E04","2026-11-20T09:41:00+05:30","tanvi.desai@example.com","complaint","","KC-1052","en","negative","0.95","TRUE","draft_reply+ticket_created","TRUE","TKT-002","Hi Tanvi,
+
+I am so sorry to hear that your Ubtan Face Pack 100 g arrived damaged with a cracked jar. Could you please reply with clear photos of the damaged product and the outer shipping box so we can look into this right away? A team member will review the details and follow up with you.
+
+Warm regards,
+Team Kesar","v2","2026-11-24T14:13:31.369Z","","order_match=order_id; order_id_source=llm; repair=none; tools=get_order,search_faq; faq=5; ticket=create","E04|v2","TRUE","complaint_needs_verification","6193","0.001996"
+"E05","2026-11-20T10:03:00+05:30","priya.sharma@example.com","order_status","","KC-1043","hinglish","negative","0.95","TRUE","draft_reply","FALSE","","Hi Priya,
+Aapka order KC-1043 ship ho chuka hai aur SwiftShip ke through aane wala hai, jiska tracking link https://track.example.com/SS7781043 hai. Iski estimated delivery date 23 Nov 2026 hai. Yeh date shayad aapki travel date se match na kare kyunki hum delivery ko fast ya special handle nahi kar sakte. Aap tracking link check karke updates dekh sakti hain.
+Warm regards,
+Team Kesar","v2","2026-11-24T14:14:45.166Z","","order_match=order_id; order_id_source=llm; repair=none; tools=get_order; faq=none","E05|v2","TRUE","","4094","0.001319"
+"E06","2026-11-20T10:17:00+05:30","promo@seo-rankers-pro.example","other","","","en","neutral","0.95","FALSE","log_only","FALSE","","","v2","2026-11-24T14:15:13.269Z","","order_match=none; order_id_source=none; repair=none; lookup=Lookup not needed for this intent.","E06|v2","TRUE","","1078","0.000096"
+"E07","2026-11-20T10:34:00+05:30","arjun.nair@example.com","order_status","","KC-1046","en","neutral","0.95","TRUE","draft_reply","TRUE","","Hi Arjun,
+
+We’re unable to share tracking or address details as the email you’re using is not the one linked to order KC‑1046. Please ask the person who placed the order to contact us from the email address used at checkout, and we’ll be happy to provide the information.
+
+Warm regards,
+Team Kesar","v2","2026-11-24T14:17:27.275Z","","order_match=order_id; order_id_source=llm; repair=none; tools=none; faq=none; lookup=The requester is not the customer on this order. Share and confirm no order detail.","E07|v2","TRUE","sender_not_owner","2481","0.000693"
+"E08","2026-11-20T10:52:00+05:30","riya.kapoor@example.com","complaint","return_refund","KC-1051","en","angry","0.95","TRUE","draft_reply+ticket_created","TRUE","TKT-003","Hi Riya,
+
+I am so sorry to hear that your Sandalwood Body Lotion 250 ml arrived leaking and damaged. As our policy requires, could you please reply with photos of the damaged product and the outer box so our team can verify and help you with your choice of a free replacement or a full refund?
+
+Warm regards,
+Team Kesar","v2","2026-11-24T14:18:28.664Z","","order_match=order_id; order_id_source=llm; repair=none; tools=get_order,search_faq; faq=5,6; ticket=create","E08|v2","TRUE","angry_customer; public_threat; complaint_needs_verification","6390","0.002047"
+"E09","2026-11-20T11:10:00+05:30","bhaskar.das@example.com","product_query","","","hi","neutral","0.9","FALSE","draft_reply","FALSE","","नमस्ते भास्कर,
+
+गुवाहाटी जैसे उत्तर-पूर्वी राज्यों में डिलीवरी में लगभग 6-8 दिन लगेंगे। कैश ऑन डिलीवरी (COD) उपलब्ध है, जिस पर ₹49 का शुल्क लगता है।
+
+Warm regards,
+Team Kesar","v2","2026-11-24T14:19:40.776Z","","order_match=none; order_id_source=none; repair=none; tools=search_faq; faq=1,2; lookup=Lookup not needed for this intent.","E09|v2","TRUE","","5927","0.001843"
+"E10","2026-11-20T11:26:00+05:30","vikram.singh@example.com","order_status","","KC-1044","en","negative","0.9","TRUE","draft_reply","FALSE","","Hi Vikram,
+
+Your order KC-1044 for two bottles of Bhringraj Hair Oil was shipped on 18 Nov 2026 via BharatExpress. You can track it here: https://track.example.com/BX5521044. The estimated delivery date is 25 Nov 2026.
+
+If you need any further assistance, please let us know.
+
+Warm regards,
+Team Kesar","v2","2026-11-24T14:22:04.785Z","","order_match=sender_email; order_id_source=none; repair=none; tools=get_order; faq=none","E10|v2","TRUE","","4075","0.001266"
+"E11","2026-11-20T11:48:00+05:30","sneha.joshi@example.com","return_refund","","KC-1048","en","neutral","0.95","TRUE","draft_reply+ticket_created","FALSE","TKT-004","Hi Sneha,
+
+I can certainly help you initiate the return for your Bridal Glow Kit from order KC-1048. Since your request is well within our return window and the item is unopened, it is fully eligible for a return. We will arrange a pickup for your order, and upon passing our quality check, the refundable amount of INR 3499 will be credited back to your original payment method within 5 to 7 business days.
+
+Warm regards,
+Team Kesar","v2","2026-11-24T14:23:08.083Z","","order_match=order_id; order_id_source=llm; repair=none; tools=get_order,search_faq; faq=6; ticket=create","E11|v2","TRUE","","6323","0.002096"
+"E13","2026-11-20T12:31:00+05:30","accounts@brightdesigns.example","other","","","en","neutral","0.95","FALSE","log_only","TRUE","","","v2","2026-11-24T14:26:37.534Z","","order_match=none; order_id_source=none; repair=none; lookup=Lookup not needed for this intent.","E13|v2","TRUE","out_of_scope_request","1077","0.000098"
+"E14","2026-11-20T12:57:00+05:30","karan.malhotra@example.com","complaint","","KC-1053","en","negative","0.95","TRUE","draft_reply+ticket_created","TRUE","TKT-005","Hi Karan,
+
+I am sorry to hear that you received Bhringraj Hair Oil instead of your Ubtan Face Pack 100 g items for order KC-1053. Could you please reply with clear photos of the items you received and the outer box so we can get this verified and sorted out for you right away.
+
+Warm regards,
+Team Kesar","v2","2026-11-24T14:27:18.786Z","","order_match=order_id; order_id_source=llm; repair=none; tools=get_order,search_faq; faq=5; ticket=create","E14|v2","TRUE","complaint_needs_verification","6172","0.001983"
+"E12","2026-11-20T12:05:00+05:30","manish.gupta@example.com","return_refund","","KC-1055","en","negative","0.95","TRUE","draft_reply+ticket_created","TRUE","TKT-005","Hi Manish,
+
+Thank you for reaching out about order KC-1055. Under our return policy, items must be returned within 7 days of delivery and must be unused, unopened, and with the seal intact. As your order was delivered on 12 Nov 2026 and the products have been used, they are currently not eligible for return or refund. I have noted your details, and a team member will review your case and follow up with you.
+
+Warm regards,
+Team Kesar","v2","2026-11-24T14:27:17.794Z","","order_match=order_id; order_id_source=llm; repair=none; tools=get_order,search_faq; faq=4,6; ticket=create","E12|v2","TRUE","embedded_instructions; refund_declined","6504","0.002144"
+"E15","2026-11-20T13:20:00+05:30","rohit.mehta@example.com","order_status","","KC-1042","en","neutral","0.95","TRUE","draft_reply","FALSE","","Hi Rohit,
+
+Your order KC-1042 is out for delivery with BharatExpress, and the estimated delivery date is 20 Nov 2026. As this is a cash on delivery order with a total amount of Rs. 1,897, please keep exact change ready for the delivery partner as they may not carry change. You can track your shipment here: https://track.example.com/BX5521042.
+
+Warm regards,
+Team Kesar","v2","2026-11-24T14:30:50.467Z","","order_match=order_id; order_id_source=llm; repair=none; tools=get_order,search_faq; faq=2","E15|v2","TRUE","","5968","0.001963"
+"E16","2026-11-20T13:44:00+05:30","aditya.verma@example.com","return_refund","","KC-1049","en","negative","0.95","TRUE","draft_reply+ticket_created","TRUE","TKT-006","Hello Aditya,
+
+I understand you were hoping for better results from Saffron Glow Face Serum 30 ml from order KC-1049 delivered on 5 Nov 2026. As per our policy, returns are accepted within 7 days of delivery and items must be unused, unopened and with the seal intact. Since the product has been opened and more than 7 days have passed since delivery, it is not eligible for a return. I have noted your feedback and a team member will review your request further.
+
+Warm regards,
+Team Kesar","v2","2026-11-24T14:31:02.777Z","","order_match=order_id; order_id_source=llm; repair=none; tools=get_order,search_faq; faq=4,6; ticket=create","E16|v2","TRUE","refund_declined","6279","0.002119"
+"E17","2026-11-20T14:09:00+05:30","collab@glowwithmira.example","other","","","en","positive","0.95","FALSE","log_only","FALSE","","","v2","2026-11-24T14:31:25.533Z","","order_match=none; order_id_source=none; repair=none; lookup=Lookup not needed for this intent.; partnership enquiry; FAQ section 9 contact partnerships@kesarandco.example","E17|v2","TRUE","","1104","0.000101"
+"E18","2026-11-20T14:30:00+05:30","rahul.b@example.com","order_status","","","en","negative","0.9","FALSE","draft_reply","TRUE","","Hi Rahul,
+
+I am sorry to hear you are waiting for your order. We could not find an order linked to your email address or any order ID in your message. Could you please double check your order ID and the email address used when placing the order so we can look into this for you?
+
+Warm regards,
+Team Kesar","v2","2026-11-24T14:32:48.454Z","","order_match=none; order_id_source=none; repair=none; tools=none; faq=none; lookup=No order ID was given and no order exists for the sender email.","E18|v2","TRUE","order_not_found","2323","0.000665"
+"E19","2026-11-20T14:52:00+05:30","farhan.sheikh@example.com","return_refund","","KC-1050","en","neutral","0.95","TRUE","draft_reply+ticket_created","FALSE","TKT-007","Hi Farhan,
+
+Yes, you can return your unopened items from order KC-1050 since it has been 3 days since delivery. For cash on delivery orders, we will refund the item value of Rs. 1648 via UPI or bank transfer after the return pickup is completed. Shipping and COD fees are not refundable on ordinary returns. Please let us know if you would like to proceed with the return pickup.
+
+Warm regards,
+Team Kesar","v2","2026-11-24T14:33:43.504Z","","order_match=order_id; order_id_source=llm; repair=none; tools=get_order,search_faq; faq=2,6; ticket=create","E19|v2","TRUE","","6277","0.002071"
+"E20","2026-11-20T15:14:00+05:30","lakshmi.n@example.com","product_query","","","en","neutral","0.9","FALSE","draft_reply","TRUE","","Hi Lakshmi,
+
+Our Kumkumadi Night Oil is a cosmetic product and is not intended to treat, cure, or diagnose any medical condition such as eczema. For managing eczema on your cheeks, we recommend consulting a dermatologist before trying any new skincare product.
+
+Warm regards,
+Team Kesar","v2","2026-11-24T14:34:14.811Z","","order_match=none; order_id_source=none; repair=none; tools=search_faq; faq=8; lookup=Lookup not needed for this intent.","E20|v2","TRUE","medical","4066","0.001254"
+"E22","2026-11-20T16:20:00+05:30","neha.kulkarni@example.com","order_status","","KC-1099","en","neutral","0.95","FALSE","draft_reply","TRUE","","Hi Neha,
+
+We’re unable to locate an order with the ID KC-1099 in our system. Could you please double‑check the order number and confirm that you’re using the same email address that was used when placing the order?
+
+If you need further assistance, just let us know and we’ll be happy to help.
+
+Warm regards,
+Team Kesar","v2","2026-11-24T14:37:57.621Z","","order_match=none; order_id_source=llm; repair=none; tools=none; faq=none; lookup=No order exists with ID KC-1099.","E22|v2","TRUE","order_not_found","2386","0.000684"
+"E23","2026-11-20T16:47:00+05:30","pooja.nair@example.com","complaint","return_refund","KC-1054","en","negative","0.95","TRUE","draft_reply+ticket_created","TRUE","TKT-008","Hi Pooja,
+
+I am sorry to hear that the Aloe Calm Gel 150 g was missing from your order KC-1054 delivered on 19 Nov 2026. As our policy requires, could you please reply with photos of the outer box showing the shipping label so we can verify this with our packing records? Once we review the photos, our team will process your refund for the missing item.
+
+Warm regards,
+Team Kesar","v2","2026-11-24T14:38:28.672Z","","order_match=order_id; order_id_source=llm; repair=none; tools=get_order,search_faq; faq=5,6; ticket=create","E23|v2","TRUE","complaint_needs_verification","6216","0.00204"
+"E24","2026-11-20T17:15:00+05:30","deepak.rao@example.com","order_status","","KC-1045","en","negative","0.95","TRUE","draft_reply","TRUE","","Hi Deepak,
+
+Your order KC-1045 for Sandalwood Body Lotion 250 ml was cancelled on 16 Nov 2026 because the item was out of stock at the warehouse. A refund of INR 828 was initiated to your original payment method on 16 Nov 2026. Please check your account for the credited amount.
+
+Warm regards,
+Team Kesar","v2","2026-11-24T14:38:55.273Z","","order_match=order_id; order_id_source=llm; repair=none; tools=get_order; faq=none","E24|v2","TRUE","order_cancelled","4037","0.00126"
+"E25","2026-11-20T17:48:00+05:30","simran.kaur@example.com","other","","","en","positive","0.95","FALSE","log_only","FALSE","","","v2","2026-11-24T14:39:18.454Z","","order_match=none; order_id_source=none; repair=none; lookup=Lookup not needed for this intent.","E25|v2","TRUE","","1041","0.000094"
+"E21","2026-11-20T15:55:00+05:30","tanvi.desai@example.com","complaint","","KC-1052","en","negative","0.95","TRUE","draft_reply+ticket_updated","TRUE","TKT-002","Hi Tanvi,
+
+Thank you for sharing the photos for order KC-1052. We have received them and a team member will review your case for the Ubtan Face Pack 100 g shortly. Once verified, we will arrange your preferred resolution.
+
+Warm regards,
+Team Kesar","v2","2026-11-24T14:40:19.341Z","","order_match=order_id; order_id_source=llm; repair=none; tools=get_order,search_faq; faq=5; ticket=update","E21|v2","TRUE","complaint_needs_verification","6172","0.001951"

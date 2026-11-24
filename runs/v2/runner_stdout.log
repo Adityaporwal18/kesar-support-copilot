@@ -1,0 +1,27 @@
+Sending 25 email(s) to http://localhost:5678/webhook/kesar-support, 15.0s apart
+[1/25] E01 -> 200 in 18.6s  order_status | draft_reply | needs_human=False
+[2/25] E02 -> 200 in 45.3s  product_query | draft_reply | needs_human=False
+[3/25] E03 -> 200 in 57.6s  return_refund | draft_reply+ticket_created | needs_human=False
+[4/25] E04 -> 200 in 33.0s  complaint | draft_reply+ticket_created | needs_human=True
+[5/25] E05 -> 200 in 144.8s  order_status | draft_reply | needs_human=False
+[6/25] E06 -> 200 in 14.5s  other | log_only | needs_human=False
+[7/25] E07 -> 200 in 27.8s  order_status | draft_reply | needs_human=True
+[8/25] E08 -> 200 in 83.8s  complaint | draft_reply+ticket_created | needs_human=True
+[9/25] E09 -> 200 in 22.3s  product_query | draft_reply | needs_human=False
+[10/25] E10 -> 200 in 49.8s  order_status | draft_reply | needs_human=False
+[11/25] E11 -> 200 in 28.4s  return_refund | draft_reply+ticket_created | needs_human=False
+[12/25] E12 -> 200 in 67.6s  return_refund | draft_reply+ticket_created | needs_human=True
+[13/25] E13 -> 200 in 15.1s  other | log_only | needs_human=True
+[14/25] E14 -> 200 in 32.9s  complaint | draft_reply+ticket_created | needs_human=True
+[15/25] E15 -> 200 in 28.7s  order_status | draft_reply | needs_human=False
+[16/25] E16 -> 200 in 38.8s  return_refund | draft_reply+ticket_created | needs_human=True
+[17/25] E17 -> 200 in 14.2s  other | log_only | needs_human=False
+[18/25] E18 -> 200 in 15.8s  order_status | draft_reply | needs_human=True
+[19/25] E19 -> 200 in 25.0s  return_refund | draft_reply+ticket_created | needs_human=False
+[20/25] E20 -> 200 in 17.4s  product_query | draft_reply | needs_human=True
+[21/25] E21 -> 200 in 23.3s  complaint | draft_reply+ticket_updated | needs_human=True
+[22/25] E22 -> 200 in 16.2s  order_status | draft_reply | needs_human=True
+[23/25] E23 -> 200 in 22.3s  complaint | draft_reply+ticket_created | needs_human=True
+[24/25] E24 -> 200 in 46.3s  order_status | draft_reply | needs_human=True
+[25/25] E25 -> 200 in 13.1s  other | log_only | needs_human=False
+All requests succeeded.
