@@ -25,7 +25,8 @@ def main():
     p.add_argument("--file", default=str(DEFAULT_FILE))
     p.add_argument("--only", default="", help="comma-separated ids, sent in the order given here")
     p.add_argument("--delay", type=float, default=45.0, help="seconds between emails (free-tier rate limits)")
-    p.add_argument("--timeout", type=float, default=180.0)
+    p.add_argument("--timeout", type=float, default=900.0, help="must exceed the slowest run; emails must never overlap")
+    p.add_argument("--keep-going", action="store_true", help="continue after a failed request (default: stop, so emails never overlap)")
     p.add_argument("--out", required=True, help="run directory, e.g. runs/v1")
     args = p.parse_args()
 
@@ -74,6 +75,10 @@ def main():
         print(f"[{i}/{len(emails)}] {email['id']} -> {status} in {elapsed}s  {summary}")
         if not ok:
             failed.append(email["id"])
+            if not args.keep_going:
+                # A timed-out email may still be running in n8n. Sending the next one would overlap two runs.
+                print("Stopping: the previous email did not finish cleanly. Fix the cause, reset the sheet and start again.")
+                break
         if i < len(emails):
             time.sleep(args.delay)
 

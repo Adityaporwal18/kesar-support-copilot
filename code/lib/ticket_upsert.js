@@ -38,13 +38,13 @@ function ticketDecision(input) {
     return { action: 'update', row: t };
   }
 
-  let max = 0;
-  for (let i = 0; i < rows.length; i++) {
-    const m = /^TKT-(\d+)$/.exec(String(rows[i].ticket_id || '').trim());
-    if (m && Number(m[1]) > max) max = Number(m[1]);
-  }
-  const next = String(max + 1);
-  const ticketId = 'TKT-' + ('000' + next).slice(-Math.max(3, next.length));
+  // The ticket ID is derived from the order (TKT-1052), not from a counter. Two emails about
+  // different orders can then never be given the same ID, even if they are processed at the
+  // same moment (a counter read from the Sheet collided in a test run when two runs overlapped).
+  const base = orderId ? 'TKT-' + String(orderId).toUpperCase().replace(/^KC-/, '') : 'TKT-' + String(email.email_id || 'X');
+  const taken = rows.map(function (r) { return String(r.ticket_id || '').trim(); });
+  let ticketId = base;
+  for (let n = 2; taken.indexOf(ticketId) !== -1; n++) ticketId = base + '-' + n; // a closed ticket already used this ID
 
   return {
     action: 'create',

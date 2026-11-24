@@ -119,6 +119,15 @@ def main():
             if len(rows) > 1:
                 ticket_problems.append(f"duplicate open tickets for {oid}")
         by_order = {(t.get("order_id") or "").strip(): t for t in tickets}
+        by_id = {(t.get("ticket_id") or "").strip(): t for t in tickets}
+        for eid in ids:
+            k = key[eid]
+            tid = per_email[eid]["ticket_id"]
+            if k["ticket"] in ("create", "update"):
+                if k["order_id"] not in by_order:
+                    ticket_problems.append(f"{eid}: no ticket row for {k['order_id']} in the Tickets tab")
+                elif tid and (by_id.get(tid) or {}).get("order_id", "").strip() != k["order_id"]:
+                    ticket_problems.append(f"{eid}: audit row points to {tid}, which is not the ticket for {k['order_id']}")
         if "E04" in ids and "E21" in ids:
             t = by_order.get("KC-1052")
             linked = [x.strip() for x in (t.get("email_ids") or "").split(",")] if t else []

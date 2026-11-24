@@ -229,13 +229,13 @@ test('ticketDecision: create, update, unchanged, closed, sequence', () => {
   const p4 = pipeline('E04');
   const created = ticketDecision({ rows: [], email: p4.email, classification: p4.classification, lookup: p4.lookup, route: p4.route, now });
   assert.strictEqual(created.action, 'create');
-  assert.strictEqual(created.row.ticket_id, 'TKT-001');
+  assert.strictEqual(created.row.ticket_id, 'TKT-1052');
   assert.strictEqual(created.row.priority, 'High');
   assert.strictEqual(created.row.order_id, 'KC-1052');
   const p21 = pipeline('E21');
   const updated = ticketDecision({ rows: [created.row], email: p21.email, classification: p21.classification, lookup: p21.lookup, route: p21.route, now });
   assert.strictEqual(updated.action, 'update');
-  assert.strictEqual(updated.row.ticket_id, 'TKT-001');
+  assert.strictEqual(updated.row.ticket_id, 'TKT-1052');
   assert.strictEqual(updated.row.email_ids, 'E04, E21');
   assert.strictEqual(updated.row.notes.split('\n').length, 2);
   assert.match(updated.row.notes, /attachments: 2/);
@@ -244,7 +244,7 @@ test('ticketDecision: create, update, unchanged, closed, sequence', () => {
   const closed = Object.assign({}, created.row, { status: 'Closed' });
   const reopened = ticketDecision({ rows: [closed, { ticket_id: 'TKT-007' }], email: p4.email, classification: p4.classification, lookup: p4.lookup, route: p4.route, now });
   assert.strictEqual(reopened.action, 'create');
-  assert.strictEqual(reopened.row.ticket_id, 'TKT-008');
+  assert.strictEqual(reopened.row.ticket_id, 'TKT-1052-2'); // the closed ticket keeps TKT-1052
   const p1 = pipeline('E01');
   assert.strictEqual(ticketDecision({ rows: [], email: p1.email, classification: p1.classification, lookup: p1.lookup, route: p1.route, now }).action, 'none');
   const p12 = pipeline('E12'); // priority comes from intent, never from the email text
@@ -333,4 +333,15 @@ test('v2 final: friendly dates, markdown stripping, invented product sizes', () 
   assert.ok(wrong.critical.includes('unbacked_measure'));
   const right = postcheckReply({ draft: 'Hi Karan,\nSorry you received Bhringraj Hair Oil 200 ml instead of the Ubtan Face Pack 100 g. Please share photos.' + sign, lookup: p14.lookup, facts: p14.facts, route: p14.route, faqText: faq, first_name: 'Karan', tools_called: ['get_order'] });
   assert.deepStrictEqual(right.critical, []);
+});
+
+test('ticket IDs come from the order, so overlapping runs cannot collide', () => {
+  // E12 and E14 processed "at the same time": both see the same sheet rows, neither sees the other's ticket.
+  const rows = [];
+  const p12 = pipeline('E12'), p14 = pipeline('E14');
+  const a = ticketDecision({ rows, email: p12.email, classification: p12.classification, lookup: p12.lookup, route: p12.route, now: 'n' });
+  const b = ticketDecision({ rows, email: p14.email, classification: p14.classification, lookup: p14.lookup, route: p14.route, now: 'n' });
+  assert.strictEqual(a.row.ticket_id, 'TKT-1055');
+  assert.strictEqual(b.row.ticket_id, 'TKT-1053');
+  assert.notStrictEqual(a.row.ticket_id, b.row.ticket_id);
 });
