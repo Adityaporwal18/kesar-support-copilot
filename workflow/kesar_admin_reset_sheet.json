@@ -1,0 +1,237 @@
+{
+  "name": "Kesar admin: reset sheet",
+  "nodes": [
+    {
+      "id": "43a8ea2f-6fed-4810-a070-68dd39131647",
+      "name": "Webhook: Reset",
+      "webhookId": "1f3833ef-b9fd-4035-a08c-944f072609d5",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "kesar-admin-reset",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "e1d3fe60-eada-41d0-a7cd-2becd6577e76",
+      "name": "Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        300
+      ],
+      "parameters": {
+        "jsCode": "\n// Safety check: only runs with an explicit confirm word and a known environment.\nconst body = $('Webhook: Reset').first().json.body || {};\nconst sheets = {\"practice\":\"1a5zYL-nUqAbjofEinTvcqx412811k8fzzdsTGiXfAMg\",\"main\":\"10iLn7j8cLkGZBr4L7KDukebJAVEriDV4Smgv_ksoz1g\"};\nconst ok = body.confirm === 'RESET' && Object.prototype.hasOwnProperty.call(sheets, body.env);\nreturn [{ json: { ok, env: body.env || null, SHEET_ID: ok ? sheets[body.env] : null } }];"
+      }
+    },
+    {
+      "id": "bdfafc35-ed99-482f-a4c5-879367c01424",
+      "name": "IF: Confirmed",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        720,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3d40131e-16c3-4d47-ad64-23325b3945cb",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      }
+    },
+    {
+      "id": "914ade86-fb43-49e8-aef4-e766fdc9ff7d",
+      "name": "Sheets: Clear Audit Log",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "alwaysOutputData": true,
+      "position": [
+        960,
+        300
+      ],
+      "parameters": {
+        "authentication": "serviceAccount",
+        "resource": "sheet",
+        "operation": "clear",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Config').first().json.SHEET_ID }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Audit Log",
+          "mode": "name"
+        },
+        "clear": "wholeSheet",
+        "keepFirstRow": true
+      },
+      "credentials": {
+        "googleApi": {
+          "id": "iRVNYd9b9cDNFWJk",
+          "name": "Google SA (Kesar)"
+        }
+      }
+    },
+    {
+      "id": "d2931658-fd2b-49d1-a966-84db21674b73",
+      "name": "Sheets: Clear Tickets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "alwaysOutputData": true,
+      "position": [
+        1200,
+        300
+      ],
+      "parameters": {
+        "authentication": "serviceAccount",
+        "resource": "sheet",
+        "operation": "clear",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Config').first().json.SHEET_ID }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Tickets",
+          "mode": "name"
+        },
+        "clear": "wholeSheet",
+        "keepFirstRow": true
+      },
+      "credentials": {
+        "googleApi": {
+          "id": "iRVNYd9b9cDNFWJk",
+          "name": "Google SA (Kesar)"
+        }
+      }
+    },
+    {
+      "id": "6d2b8ac2-b7d6-4b63-a983-84d63f52d10c",
+      "name": "Respond: Done",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1440,
+        300
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, env: $('Config').first().json.env, cleared: ['Audit Log', 'Tickets'] }) }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "364cf579-39b7-4d14-a87a-1981ed853fd3",
+      "name": "Respond: Refused",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        960,
+        520
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: false, error: 'Send {\"env\":\"practice|main\",\"confirm\":\"RESET\"}' }) }}",
+        "options": {
+          "responseCode": 400
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook: Reset": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "IF: Confirmed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Confirmed": {
+      "main": [
+        [
+          {
+            "node": "Sheets: Clear Audit Log",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond: Refused",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sheets: Clear Audit Log": {
+      "main": [
+        [
+          {
+            "node": "Sheets: Clear Tickets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sheets: Clear Tickets": {
+      "main": [
+        [
+          {
+            "node": "Respond: Done",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

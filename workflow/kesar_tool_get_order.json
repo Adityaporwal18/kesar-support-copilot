@@ -1,0 +1,93 @@
+{
+  "name": "Kesar tool: get_order",
+  "nodes": [
+    {
+      "id": "44ae91ec-79fe-4352-aaab-5ff615f28c40",
+      "name": "When Called",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {
+        "inputSource": "workflowInputs",
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "order_id",
+              "type": "string"
+            },
+            {
+              "name": "requester_email",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "639ccffd-daef-40f6-a4f1-c1564cb5aa08",
+      "name": "HTTP: Orders",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "position": [
+        480,
+        300
+      ],
+      "parameters": {
+        "url": "https://raw.githubusercontent.com/abhishek-patel-cadient/kesar-ai-copilot-assignment/refs/heads/main/data/orders.json",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "6074dcc3-a2f4-4aa3-a937-bc266248b1b6",
+      "name": "Lookup",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// ---- from code/lib/resolve_order.js (unit-tested in code/test) ----\nfunction trimOrder(o) {\n  return {\n    order_id: o.order_id,\n    customer_first_name: String(o.customer_name || '').split(/\\s+/)[0] || '',\n    order_date: o.order_date,\n    items: (o.items || []).map(function (i) { return { name: i.name, qty: i.qty, unit_price: i.unit_price }; }),\n    subtotal: o.subtotal,\n    shipping_fee: o.shipping_fee,\n    cod_fee: o.cod_fee,\n    total: o.total,\n    payment_method: o.payment_method,\n    status: o.status,\n    courier: o.courier,\n    tracking_url: o.tracking_url,\n    shipped_date: o.shipped_date,\n    estimated_delivery: o.estimated_delivery,\n    delivered_date: o.delivered_date,\n    cancelled_date: o.cancelled_date,\n    cancellation_reason: o.cancellation_reason,\n    refund_status: o.refund_status,\n    shipping_address: o.shipping_address,\n  };\n}\n\n// Values the reply must never contain when the sender is not the owner.\n// Only returned when include_withheld is true (the workflow's own call).\n// The agent's tool call never sets it, so the model cannot see these.\nfunction withheldValues(o) {\n  const a = o.shipping_address || {};\n  const vals = [o.tracking_url, o.courier, a.line1, a.city, a.pincode, o.shipped_date, o.estimated_delivery, o.delivered_date];\n  if (o.tracking_url) vals.push(String(o.tracking_url).split('/').pop());\n  return vals.filter(function (v) { return v !== null && v !== undefined && String(v) !== ''; }).map(String);\n}\n\nfunction resolveOrder(input) {\n  const orders = (input && input.orders) || [];\n  const requester = String((input && input.requester_email) || '').trim().toLowerCase();\n  const rawId = input && input.order_id ? String(input.order_id).trim().toUpperCase() : '';\n  const allowEmail = !(input && input.allow_email_fallback === false);\n  const includeWithheld = !!(input && input.include_withheld);\n\n  const base = { found: false, authorized: false, match_method: 'none', order_id: rawId || null, order: null, reason: '' };\n\n  if (rawId) {\n    const hit = orders.filter(function (o) { return String(o.order_id).toUpperCase() === rawId; })[0];\n    if (!hit) {\n      // Never substitute another order for an ID the customer wrote.\n      base.reason = 'No order exists with ID ' + rawId + '.';\n      return base;\n    }\n    const owner = String(hit.customer_email || '').trim().toLowerCase();\n    if (owner !== requester) {\n      const out = { found: true, authorized: false, match_method: 'order_id', order_id: rawId, order: null, reason: 'The requester is not the customer on this order. Share and confirm no order detail.' };\n      if (includeWithheld) out.withheld = withheldValues(hit);\n      return out;\n    }\n    return { found: true, authorized: true, match_method: 'order_id', order_id: rawId, order: trimOrder(hit), reason: '' };\n  }\n\n  if (!allowEmail || !requester) {\n    base.reason = 'No order ID was given.';\n    return base;\n  }\n\n  const mine = orders.filter(function (o) { return String(o.customer_email || '').trim().toLowerCase() === requester; });\n  if (mine.length === 1) {\n    return { found: true, authorized: true, match_method: 'sender_email', order_id: mine[0].order_id, order: trimOrder(mine[0]), reason: '' };\n  }\n  if (mine.length > 1) {\n    base.reason = 'Multiple orders exist for this email (' + mine.map(function (o) { return o.order_id; }).join(', ') + '). Ask which order.';\n    return base;\n  }\n  base.reason = 'No order ID was given and no order exists for the sender email.';\n  return base;\n}\n\n// The tool returns at most one order, and only to the customer who placed it.\nconst args = $('When Called').first().json;\nconst raw = $('HTTP: Orders').first().json.data;\nconst orders = (typeof raw === 'string' ? JSON.parse(raw) : raw).orders;\nconst id = args.order_id && String(args.order_id).trim() && String(args.order_id).toLowerCase() !== 'null' ? args.order_id : null;\nreturn [{ json: resolveOrder({ orders, order_id: id, requester_email: args.requester_email, allow_email_fallback: true, include_withheld: false }) }];"
+      }
+    }
+  ],
+  "connections": {
+    "When Called": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Orders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP: Orders": {
+      "main": [
+        [
+          {
+            "node": "Lookup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

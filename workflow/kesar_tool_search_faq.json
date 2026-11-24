@@ -1,0 +1,89 @@
+{
+  "name": "Kesar tool: search_faq",
+  "nodes": [
+    {
+      "id": "a434d3df-2087-4fdc-a1c3-5d47da366872",
+      "name": "When Called",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {
+        "inputSource": "workflowInputs",
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "query",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "13144555-8ed8-4022-ad0c-7bde9fe230b8",
+      "name": "HTTP: FAQ",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "position": [
+        480,
+        300
+      ],
+      "parameters": {
+        "url": "https://raw.githubusercontent.com/abhishek-patel-cadient/kesar-ai-copilot-assignment/refs/heads/main/data/faq.md",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "7ccc78b6-c04f-4cf9-a834-c2b55902c643",
+      "name": "Search",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// ---- from code/lib/search_faq.js (unit-tested in code/test) ----\nconst SF_STOPWORDS = ['the', 'a', 'an', 'is', 'are', 'was', 'be', 'to', 'of', 'in', 'on', 'for', 'and', 'or', 'my', 'me', 'i', 'it', 'its',\n  'this', 'that', 'with', 'can', 'do', 'does', 'how', 'what', 'when', 'will', 'your', 'you', 'we', 'our', 'product', 'products',\n  'order', 'orders', 'item', 'please', 'kesar', 'about', 'if', 'from', 'at', 'by', 'as', 'have', 'has', 'get', 'any', 'policy'];\n\n// Query word -> extra words to look for in the FAQ text.\nconst SF_SYNONYMS = {\n  cod: ['cash', 'cod'], cash: ['cod'],\n  shipping: ['delivery', 'dispatch'], ship: ['delivery', 'dispatch', 'shipping'], deliver: ['delivery'],\n  northeast: ['north'], guwahati: ['north'], assam: ['north'],\n  broken: ['damaged'], cracked: ['damaged'], damage: ['damaged'], leak: ['leaking'], leaked: ['leaking'], spilled: ['leaking', 'damaged'],\n  wrong: ['wrong'], incorrect: ['wrong'], missing: ['missing'],\n  money: ['refund'], refunds: ['refund'], returns: ['return'], exchange: ['return', 'replacement'],\n  cancel: ['cancellation', 'cancelled'], cancelled: ['cancellation'],\n  heal: ['cure'], treat: ['cure', 'treat'], medical: ['medical', 'doctor'], allergy: ['allergies'], allergic: ['allergies'], rash: ['reaction'],\n  influencer: ['influencers', 'partnership'], collab: ['partnership'], collaboration: ['partnership'], wholesale: ['wholesale', 'partnership'],\n  hours: ['hours'], contact: ['contact', 'email'],\n};\n\nfunction sfStem(w) {\n  return w.length > 3 && w.charAt(w.length - 1) === 's' ? w.slice(0, -1) : w;\n}\n\nfunction sfTokens(text) {\n  return String(text || '').toLowerCase().split(/[^a-z0-9]+/).filter(function (w) { return w.length >= 2 && SF_STOPWORDS.indexOf(w) === -1; });\n}\n\nfunction splitFaqSections(faqMarkdown) {\n  const lines = String(faqMarkdown || '').split(/\\r?\\n/);\n  const sections = [];\n  let current = null;\n  for (let i = 0; i < lines.length; i++) {\n    const m = /^## (\\d+)\\.\\s+(.*)$/.exec(lines[i]);\n    if (m) {\n      current = { section: Number(m[1]), title: m[2].trim(), lines: [lines[i]] };\n      sections.push(current);\n    } else if (current) {\n      current.lines.push(lines[i]);\n    }\n  }\n  return sections.map(function (s) { return { section: s.section, title: s.title, text: s.lines.join('\\n').trim() }; });\n}\n\nfunction searchFaq(faqMarkdown, query) {\n  const none = { matches: [], note: 'No FAQ section covers this. Do not answer; escalate.' };\n  const base = sfTokens(query);\n  if (base.length === 0) return none;\n\n  // Expand the query with synonyms, then stem.\n  const words = [];\n  for (let i = 0; i < base.length; i++) {\n    const extra = [base[i]].concat(SF_SYNONYMS[base[i]] || []);\n    for (let j = 0; j < extra.length; j++) {\n      const st = sfStem(extra[j]);\n      if (words.indexOf(st) === -1) words.push(st);\n    }\n  }\n\n  const scored = splitFaqSections(faqMarkdown).map(function (s) {\n    const titleWords = sfTokens(s.title).map(sfStem);\n    const bodyWords = sfTokens(s.text).map(sfStem);\n    let score = 0;\n    for (let i = 0; i < words.length; i++) {\n      if (titleWords.indexOf(words[i]) !== -1) score += 3;        // a heading match is strong evidence\n      else if (bodyWords.indexOf(words[i]) !== -1) score += 1;\n    }\n    return { section: s.section, title: s.title, text: s.text, score: score };\n  }).filter(function (s) { return s.score > 0; });\n\n  if (scored.length === 0) return none;\n  scored.sort(function (a, b) { return b.score - a.score || a.section - b.section; });\n  return { matches: scored.slice(0, 2).map(function (s) { return { section: s.section, title: s.title, text: s.text }; }) };\n}\n\n// Returns the matching FAQ section(s) verbatim, or an explicit \"not covered\" note.\nconst q = $('When Called').first().json.query;\nreturn [{ json: searchFaq(String($('HTTP: FAQ').first().json.data || ''), q) }];"
+      }
+    }
+  ],
+  "connections": {
+    "When Called": {
+      "main": [
+        [
+          {
+            "node": "HTTP: FAQ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP: FAQ": {
+      "main": [
+        [
+          {
+            "node": "Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
