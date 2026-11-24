@@ -1,4 +1,4 @@
-# Kesar & Co. Support Copilot — (your name)
+# Kesar & Co. Support Copilot — Aditya Porwal
 
 An n8n workflow that reads each support email, classifies it with an LLM, looks up the order, drafts a reply with an AI agent, raises tickets, and logs everything to a Google Sheet. Replies are drafts only; nothing is sent.
 
@@ -8,12 +8,14 @@ An n8n workflow that reads each support email, classifies it with an LLM, looks 
 
 ## 1. Summary
 
-> **DRAFT - candidate to rewrite.** The facts are real; put this in your own words before submitting.
-
-- What I built (2–3 lines): a support copilot in n8n where the LLM only reads and writes language, and code decides privacy, refund eligibility, dates and duplicate tickets. It ran all 25 test emails end to end without manual fixes.
-- Platform and LLM used: n8n 2.49.5 self-hosted on my laptop (Node, no Docker); Groq `openai/gpt-oss-20b` for classification; Google `gemini-3.5-flash-lite` for the reply agent with Groq `openai/gpt-oss-120b` as fallback. All on free tiers.
-- Time spent (approx. hours): (fill in your real hours; see section 8 for how the work was split)
-- What works / what doesn't: final run (v2) scored 25/25 on intent and 25/25 on action against my own answer key, with valid JSON on the first try 25/25 times. These numbers are in-sample (I tuned on the same 25 emails). What does not work well yet is listed in `TEST_REPORT.md` section 5.
+- What I built (2–3 lines): A support agent that goes through customer emails and drafts the replies a human would normally write. It finds the order, checks that the order is real and that the person writing is the customer on it, and deals with the tricky cases: a follow-up email about the same order (no second ticket), medical questions, and broken JSON from the model.
+- Platform and LLM used: n8n, self-hosted on my laptop. Groq `openai/gpt-oss-20b` for classification, Gemini `gemini-3.5-flash-lite` for writing replies, and Groq `openai/gpt-oss-120b` as backup. All on free tiers.
+- Time spent (approx. hours): About 3 hours of my own time. The AI coding agent worked for roughly 6 hours on top of that (my estimate is 5 to 7), planning included. Section 8 explains the split.
+- What works / what doesn't:
+  - Version 1 (11 emails) missed two things. It did not flag a medical question, and it treated a follow-up about a broken jar as a refund instead of a complaint.
+  - Version 2 was run in full four times. Run 1: a Hinglish email got a reply in Hindi script, fixed in code. Run 2: a reply stated a product size the customer never gave; code now blocks sizes that are not in the order or the FAQ. Run 3: the AI provider slowed down, two emails overlapped and one ticket overwrote another; ticket IDs now come from the order and the sender waits for each email to finish. Run 4 passed every check: 25/25 on intent and action.
+  - Run 4 was not perfect. For E12 the backup model wrote "refund approved"; the code check caught it and replaced the draft with a holding reply.
+  - These results are on the same 25 emails I tuned on, so they say little about new emails. The remaining problems are in `TEST_REPORT.md` section 5.
 
 ## 2. Architecture
 
@@ -21,27 +23,27 @@ An n8n workflow that reads each support email, classifies it with an LLM, looks 
 
 One webhook call is one email is one execution, so emails are handled strictly in order and each run is easy to inspect.
 
-| Step / node | What it does | Why I designed it this way |
-|---|---|---|
-| Webhook: New Email | Receives one email as JSON and waits for the result. | Sequential processing guarantees a follow-up email sees the ticket created by the first one. |
-| Config | Every setting: return window (7 days), damage window (2 days), confidence threshold (0.75), sheet ID, prompt version, list prices. | One place to change behaviour. |
-| Normalize Email | Lower-cases the sender, extracts any `KC-####` in the text, wraps the email in `<email>` tags. | The email is treated as data; the extracted IDs let code verify the model never invents one. |
-| IF: Bad Input | Returns HTTP 400 for a body with no id or sender. | Bad input should not create audit rows. |
-| HTTP: Orders / HTTP: FAQ | Fetch `orders.json` and `faq.md` from the assignment repo. | The "order API" and the only policy source. |
-| LLM: Classify | Small model, temperature 0, returns the required JSON. | A narrow job for a cheap, fast model. |
-| Validate Classification | Code checks the JSON against the schema, confirms the order ID literally appears in the email, and corrects the language label from the script used. | "Valid every time" is enforced, not assumed. |
-| LLM: Repair JSON / Validate Repair | One repair call when the first output is unusable. | Bounded retry. |
-| Finalize Classification | Chooses first try, code-fixed, repaired, or a deterministic fallback (`other`, confidence 0, needs human). Records first-try validity. | The run always completes and the metric is honest. |
-| Resolve Order | Looks up by order ID, else by sender email, and checks the sender owns the order. | Privacy is decided in code before the model sees any order data. |
-| Compute Facts | Days since delivery from the email's `received_at`, return eligibility, refundable amount. | No date maths or policy decisions by the LLM; no wall clock. |
-| Decide Route | Route, ticket needed, priority, needs-human reasons, and a verdict-only brief for the agent. Detects medical wording and instruction-like text in code. | Every hard rule in one place; email text cannot change priority or skip a ticket. |
-| AI Agent: Draft Reply | Agent with two tools, `get_order` and `search_faq`. It receives verdicts only, so it must call the tools for any fact. | Meets the "agent decides which tools to call" requirement and keeps replies grounded. |
-| get_order (sub-workflow tool) | Returns one order, only when the requester is its customer. The requester's email comes from the trigger, not from the model. | The model can never fetch another customer's order or the whole order file. |
-| search_faq (sub-workflow tool) | Splits `faq.md` by heading and returns the best-matching section(s) word for word, or "not covered". | The FAQ is ~80 lines; section retrieval is exact and cheap. No vector store needed. |
-| Postcheck Reply | Code checks the draft: no order details for a non-owner, no link except the real tracking link, no rupee amount or product size missing from the order/FAQ, no cure claims, no "refund approved". A failure replaces the draft with a neutral holding reply and flags it. | A model can be talked out of a rule; code cannot. |
-| Ticket branch | Reads tickets; updates the open ticket for the order, or creates one whose ID comes from the order (`TKT-1052` for `KC-1052`). Idempotent on email ID. | One open ticket per order; no duplicates; two different orders can never get the same ticket ID. |
-| Build Audit Row / Sheets: Upsert Audit Row | One row per email, keyed on `email_id|prompt_version`, written even when the agent fails. | Every email is logged; a retry cannot create a second row. |
-| Build Response / Respond to Webhook | Returns the result as JSON. | The runner saves each response so runs can be scored. |
+| Step / node                                | What it does                                                                                                                                                                                                                                                              | Why I designed it this way                                                                       |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Webhook: New Email                         | Receives one email as JSON and waits for the result.                                                                                                                                                                                                                      | Sequential processing guarantees a follow-up email sees the ticket created by the first one.     |
+| Config                                     | Every setting: return window (7 days), damage window (2 days), confidence threshold (0.75), sheet ID, prompt version, list prices.                                                                                                                                        | One place to change behaviour.                                                                   |
+| Normalize Email                            | Lower-cases the sender, extracts any `KC-####` in the text, wraps the email in `<email>` tags.                                                                                                                                                                        | The email is treated as data; the extracted IDs let code verify the model never invents one.     |
+| IF: Bad Input                              | Returns HTTP 400 for a body with no id or sender.                                                                                                                                                                                                                         | Bad input should not create audit rows.                                                          |
+| HTTP: Orders / HTTP: FAQ                   | Fetch `orders.json` and `faq.md` from the assignment repo.                                                                                                                                                                                                            | The "order API" and the only policy source.                                                      |
+| LLM: Classify                              | Small model, temperature 0, returns the required JSON.                                                                                                                                                                                                                    | A narrow job for a cheap, fast model.                                                            |
+| Validate Classification                    | Code checks the JSON against the schema, confirms the order ID literally appears in the email, and corrects the language label from the script used.                                                                                                                      | "Valid every time" is enforced, not assumed.                                                     |
+| LLM: Repair JSON / Validate Repair         | One repair call when the first output is unusable.                                                                                                                                                                                                                        | Bounded retry.                                                                                   |
+| Finalize Classification                    | Chooses first try, code-fixed, repaired, or a deterministic fallback (`other`, confidence 0, needs human). Records first-try validity.                                                                                                                                  | The run always completes and the metric is honest.                                               |
+| Resolve Order                              | Looks up by order ID, else by sender email, and checks the sender owns the order.                                                                                                                                                                                         | Privacy is decided in code before the model sees any order data.                                 |
+| Compute Facts                              | Days since delivery from the email's `received_at`, return eligibility, refundable amount.                                                                                                                                                                              | No date maths or policy decisions by the LLM; no wall clock.                                     |
+| Decide Route                               | Route, ticket needed, priority, needs-human reasons, and a verdict-only brief for the agent. Detects medical wording and instruction-like text in code.                                                                                                                   | Every hard rule in one place; email text cannot change priority or skip a ticket.                |
+| AI Agent: Draft Reply                      | Agent with two tools, `get_order` and `search_faq`. It receives verdicts only, so it must call the tools for any fact.                                                                                                                                                | Meets the "agent decides which tools to call" requirement and keeps replies grounded.            |
+| get_order (sub-workflow tool)              | Returns one order, only when the requester is its customer. The requester's email comes from the trigger, not from the model.                                                                                                                                             | The model can never fetch another customer's order or the whole order file.                      |
+| search_faq (sub-workflow tool)             | Splits `faq.md` by heading and returns the best-matching section(s) word for word, or "not covered".                                                                                                                                                                    | The FAQ is ~80 lines; section retrieval is exact and cheap. No vector store needed.              |
+| Postcheck Reply                            | Code checks the draft: no order details for a non-owner, no link except the real tracking link, no rupee amount or product size missing from the order/FAQ, no cure claims, no "refund approved". A failure replaces the draft with a neutral holding reply and flags it. | A model can be talked out of a rule; code cannot.                                                |
+| Ticket branch                              | Reads tickets; updates the open ticket for the order, or creates one whose ID comes from the order (`TKT-1052` for `KC-1052`). Idempotent on email ID.                                                                                                                | One open ticket per order; no duplicates; two different orders can never get the same ticket ID. |
+| Build Audit Row / Sheets: Upsert Audit Row | One row per email, keyed on `email_id\|prompt_version`, written even when the agent fails. | Every email is logged; a retry cannot create a second row. |
+| Build Response / Respond to Webhook        | Returns the result as JSON.                                                                                                                                                                                                                                               | The runner saves each response so runs can be scored.                                            |
 
 Supporting workflows: `Kesar tool: get_order`, `Kesar tool: search_faq`, `Kesar admin: reset sheet` (clears data rows before a run).
 
@@ -166,6 +168,7 @@ The agent's user message is a `FACTS` block built by code (intent, reply languag
 ## 6. Scaling to 1,000 emails/day
 
 What breaks first, in order:
+
 1. **Google Sheets as the database.** Each email reads the whole Tickets tab and the upsert takes about 13 seconds per write in my runs. There is no locking, so two emails about the same order arriving together could both create a ticket. I would move tickets and the audit log to Postgres with a unique constraint on (order_id, open), and keep a Sheet only as a read-only view.
 2. **LLM rate limits.** Free tiers throttled my last run (some replies took over a minute). At volume: a paid tier, a queue in front of the workflow with a fixed concurrency, and exponential backoff on 429.
 3. **One execution per email is fine**, but n8n should run in queue mode with workers, and the webhook should acknowledge immediately instead of holding the connection.
@@ -176,26 +179,28 @@ What breaks first, in order:
 
 ## 7. Product-thinking questions (≤150 words each)
 
-> **DRAFT - candidate to rewrite.** The facts are real; put this in your own words before submitting.
+1. **Auto-send vs. draft:** I'd only auto-send order-status replies, and only when three things hold: the order was found, the sender's email matches the order, and all the code checks on the draft passed. Anything with money (refunds, returns), complaints, privacy, medical questions, angry customers, or a missing or cancelled order stays a draft for a person. My threshold is 0.75, but I don't trust the confidence number much. The model gave 0.95 to almost every email, even a two-line "Where is it???". So the rules do the deciding and confidence is just a backstop. For the first week I'd keep everything as drafts and count how many get sent without edits. If that goes above roughly 95% for order status, I'd switch auto-send on for that one category first.
 
-1. **Auto-send vs. draft:** Facts to use: in the final run 12 of 25 emails were not flagged (clean order status, FAQ answers, eligible returns, spam and thanks); 13 were flagged. The model's own confidence was 0.95 on nearly everything, so it cannot be the gate by itself. A cautious position: auto-send only order-status replies where the order was found, the sender owns it, and every post-check passed; keep everything involving money, complaints, privacy, medical wording or a missing order as drafts; start with 100% drafts for a week and measure how often a human sends them unchanged.
+2. **Cost:** From my final run, an average email used 3,446 input tokens and 371 output tokens.
+   - Classifier (Groq gpt-oss-20b): 954 × $0.075/M + 229 × $0.30/M = $0.00014
+   - Reply agent (Gemini 3.5 Flash-Lite): 2,492 × $0.30/M + 142 × $2.50/M = $0.00110
 
-2. **Cost:** Measured in the final run: 3446 input and 371 output tokens per email on average. Classifier: 954 × $0.075/M + 229 × $0.30/M = $0.000140. Agent: 2492 × $0.30/M + 142 × $2.50/M = $0.001103. Total $0.001243 per email; × 30,000 emails = $37.29 per month at paid list prices (read 24 Nov 2026). Add roughly 10% for retries. The assignment itself cost nothing (free tiers).
+   That is about $0.00124 per email. At 1,000 emails a day: 30,000 × $0.00124 ≈ $37 a month, or about $41 with 10% added for retries. These are paid list prices from 24 Nov 2026; my own runs were free because I stayed on free tiers. So the model is cheap. The expensive part is the person who still has to read the drafts.
 
-3. **Success metric:** Candidate metric: share of drafts a human sends without editing. Switch-off triggers worth naming: any order detail sent to a non-owner, any invented fact or promise reaching a customer, or the unedited-send rate staying low.
+3. **Success metric:** One number: how many drafts the support person sends without changing anything. If that is high, it is saving real time. If it is low, it is just extra reading. I'd turn it off straight away if an order detail ever went to someone who isn't the customer, or if a customer got a made-up fact or a promise the policy doesn't allow. That is not a theoretical worry: in my last run the backup model wrote "refund approved" because the email told it to, and only the code check stopped it. I'd also pause it if less than about half the drafts are usable as they are.
 
-4. **Failure experience:** Facts: every reply is a draft; risky cases are flagged with a reason; a failed post-check swaps in a neutral holding reply; every email has an audit row. The realistic failure is a wrong or robotic draft that a human must catch, or an email logged as `other` that nobody answers.
+4. **Failure experience:** Right now the customer never sees a wrong reply directly, because everything is a draft and a person sends it. So the worst case for them is a slower answer, or a plain holding reply when the code rejects a draft. Four things keep the damage small: risky emails are flagged with the reason, a bad draft gets replaced instead of passed on, the agent never gets order data for someone who isn't the customer, and every email has a row in the audit log so a mistake can be traced back. The failure that worries me most is the quiet one: an email gets logged as "other", no draft is written, and nobody replies. I'd have someone check the "other" emails once a day.
 
-5. **Don't automate:** Candidates from this build: approving a refund or replacement (needs photo verification and has fraud risk); answering anything about skin conditions or reactions.
+5. **Don't automate:** Approving a refund or a replacement. It moves money, somebody has to actually look at the photos (my workflow only sees the file names), and it is where fraud and angry customers show up. The copilot can do the preparation: check the dates, find the order, draft the reply, open the ticket. But the yes or no should come from a person.
 
 ## 8. How I used AI tools
 
-> **DRAFT - candidate to rewrite.** The facts are real; put this in your own words before submitting.
+I used OpenCode with Claude as an AI coding agent for most of the build, and I'd rather say that plainly.
 
-Honest account of what happened, to rewrite in your own words:
-- An AI coding agent (Claude, running in the OpenCode terminal tool) wrote and tested the workflow, the rule code, the unit tests, the prompts, the build and scoring scripts, and the first drafts of this README and the test report, working on my laptop under my direction. It also ran the test emails and read the results.
-- What I did myself: (list truthfully, for example: created the Groq, Gemini and Google Cloud accounts and keys, created and shared the Google Sheets, enabled the APIs, reviewed and approved the expected answers, walked through every node, made practice changes by hand, wrote sections 1, 7 and 8, took the screenshots, recorded the video).
-- Where I relied on my own judgment: (fill in, for example which emails should be flagged for a human, what to auto-send, which weaknesses to disclose).
+- **What the AI did:** It read the assignment and planned the approach with me. It wrote the rule code and its 18 tests, the prompts, the n8n workflows and the build and scoring scripts. It ran the test emails, read every draft, and found and fixed problems over four full runs. It also wrote the first drafts of this README and the test report, including the product answers in section 7.
+- **What I did myself:** I decided how to build it (n8n on my laptop, free Groq and Gemini). I set up the Groq and Gemini API keys. In Google Cloud I created the project and the service account and enabled the Sheets and Drive APIs, and I created and shared the two Google Sheets. I wrote the summary in section 1 (the AI tidied my wording), read and approved the rest, took the screenshots, recorded the video and submitted.
+- **Where I used my own judgment:** What to accept and what to change in the AI's drafts, and choosing to list the weak points in the test report instead of hiding them.
+- **Still doing:** Going through the workflow node by node so I can explain it and change it myself in the live session.
 
 ## 9. If I had one more week
 
